@@ -1,0 +1,145 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Happy Birthday!</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,500;1,500&family=Nunito:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg1:#ffd9e6;--bg2:#ffb8d1;--card:rgba(255,255,255,.62);--ink:#5a1f3a;--soft:#8a4663;--accent:#e0457f;--accent-ink:#fff;--ring:224,69,127;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){--bg1:#3a1428;--bg2:#5c1f3d;--card:rgba(255,220,235,.12);--ink:#ffe3ee;--soft:#f0b5cd;--accent:#ff7aa8;--accent-ink:#4a1030;--ring:255,150,190}
+}
+html,body{height:100%;margin:0}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{background:linear-gradient(160deg,var(--bg1),var(--bg2));color:var(--ink);font-family:"Nunito",system-ui,sans-serif;overflow:hidden}
+canvas{position:fixed;inset:0;width:100%;height:100%;z-index:0}
+main{position:relative;z-index:1;height:100%;display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box}
+.card{width:min(460px,100%);background:var(--card);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.5);border-radius:28px;padding:40px 30px 30px;text-align:center;box-shadow:0 20px 50px rgba(160,40,90,.18);transition:opacity .35s,transform .35s,background 1.8s,border-color 1.8s,box-shadow 1.8s,backdrop-filter 1.8s,-webkit-backdrop-filter 1.8s}
+.card.out{opacity:0;transform:translateY(10px) scale(.98)}
+.card.hide{opacity:0;pointer-events:none;transition:opacity 1.2s}
+h1,p{transition:color 1.8s}
+body.night{--ink:#ffffff;--soft:#d9d2f0}
+body.night .card{background:rgba(255,255,255,0);border-color:rgba(255,255,255,0);box-shadow:0 0 0 rgba(0,0,0,0);-webkit-backdrop-filter:blur(0px);backdrop-filter:blur(0px)}
+#night{position:fixed;inset:0;z-index:0;background:linear-gradient(180deg,#070716,#1b1040 60%,#3a1550);opacity:0;transition:opacity 2s}
+body.night #night{opacity:1}
+h1{font-family:"Fraunces",Georgia,serif;font-weight:500;font-size:clamp(30px,8vw,42px);line-height:1.15;margin:0 0 16px}
+p{font-size:clamp(17px,4.6vw,20px);line-height:1.6;margin:0 0 28px;color:var(--soft)}
+.emoji{font-size:44px;margin-bottom:10px;display:block}
+button{font:600 17px "Nunito",system-ui,sans-serif;background:var(--accent);color:var(--accent-ink);border:0;border-radius:999px;padding:13px 34px;cursor:pointer;transition:transform .15s,box-shadow .15s;box-shadow:0 8px 20px rgba(224,69,127,.35)}
+button:hover{transform:translateY(-2px)}
+button:active{transform:scale(.96)}
+button:disabled{opacity:.6;cursor:default;transform:none}
+button:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
+.dots{display:flex;gap:8px;justify-content:center;margin-top:24px}
+.dots i{width:8px;height:8px;border-radius:50%;background:var(--soft);opacity:.3;transition:.3s}
+.dots i.on{opacity:1;background:var(--accent);transform:scale(1.25)}
+.again{background:none;box-shadow:none;color:var(--soft);font-size:14px;padding:8px 12px;margin-top:10px;text-decoration:underline}
+@media (prefers-reduced-motion:reduce){.card{transition:none}}
+</style>
+</head>
+<body>
+<div id="night" aria-hidden="true"></div>
+<canvas id="fx" aria-hidden="true"></canvas>
+<main><section class="card" id="card" aria-live="polite"></section></main>
+<script>
+const steps=[
+ {e:"🎀",h:"Hey, Birthday Girl!",t:"We haven't known each other for very long, but some people don't need years of friendship to deserve a little appreciation and a genuine wish.",b:"Go ahead"},
+ {e:"🌸",h:"It's your day",t:"The 8th of December is finally here, and Someone's birthday deserves a little magic today... ✨",b:"Next"},
+ {e:"💗",h:"Thank you for being my friend",t:"We may be at the very beginning of our friendship, but I'm glad we've had the chance to know each other.",b:"Keep reading"},
+ {e:"✨",h:"People who make life brighter",t:"May you always have people around you who respect you, support you, and make you laugh until your cheeks hurt. 🌸",b:"Go on"},
+ {e:"🌷",h:"My wish for you",t:"May life give you a thousand little reasons to smile, even on the days when you least expect them.",b:"One more"},
+ {e:"🍰",h:"Today's only rule",t:"Eat too much cake, ignore your phone for a bit, and do whatever makes you happiest.",b:"Almost there"},
+ {e:"🎂",h:"Happy Birthday, Nyasha!",t:"You have to smile at least once while reading this. It's a birthday rule. 😂",b:"Celebrate 🎉",final:true},
+ {e:"🕯️",h:"Make a wish, Nyasha",t:"Close your eyes, think of something you really want this year, and blow out the candles. I hope it comes true.",b:"More fireworks 🎆",final:true,last:true}
+];
+const card=document.getElementById('card');let i=0;
+function dotsHTML(){return '<div class="dots">'+steps.map((_,k)=>'<i class="'+(k<=i?'on':'')+'"></i>').join('')+'</div>'}
+function render(){
+  const s=steps[i];
+  card.innerHTML='<span class="emoji">'+s.e+'</span><h1>'+s.h+'</h1><p>'+s.t+'</p><button id="go">'+s.b+'</button>'+
+    dotsHTML();
+  document.getElementById('go').onclick=e=>{
+    const r=e.currentTarget.getBoundingClientRect(),x=r.left+r.width/2,y=r.top+r.height/2;
+    wave(x,y,1.6);
+    if(s.final){
+      const btn=e.currentTarget;btn.disabled=true;
+      if(!s.last){
+        nightOn();
+        setTimeout(()=>fireworks(8),2200);
+        setTimeout(()=>{card.classList.add('out');setTimeout(()=>{i++;render();card.classList.remove('out')},320)},7800);
+      }else{
+        card.classList.add('hide');
+        setTimeout(()=>fireworks(8),1400);
+        setTimeout(()=>{card.classList.remove('hide');btn.disabled=false},7600);
+      }
+      return}
+    card.classList.add('out');
+    setTimeout(()=>{i++;render();card.classList.remove('out')},320);
+  };
+}
+/* background effects */
+const cv=document.getElementById('fx'),cx=cv.getContext('2d');let W,H,DPR;
+function size(){DPR=Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight;cv.width=W*DPR;cv.height=H*DPR;cx.setTransform(DPR,0,0,DPR,0,0)}
+addEventListener('resize',size);size();
+const reduce=matchMedia('(prefers-reduced-motion:reduce)').matches;
+const cols=['#ff9ec0','#ff7aa8','#ffc2d6','#f95d8f','#ffd0e0'];
+function mk(top){return{x:Math.random()*W,y:top?-20:Math.random()*H,s:8+Math.random()*14,v:.5+Math.random()*1.1,sw:Math.random()*6,ph:Math.random()*6,r:Math.random()*6,vr:(Math.random()-.5)*.03,c:cols[Math.random()*cols.length|0],heart:Math.random()<.28,a:.55+Math.random()*.4}}
+let ps=Array.from({length:reduce?14:40},()=>mk(false));
+function petal(p){cx.beginPath();cx.moveTo(0,-p.s);cx.bezierCurveTo(p.s*.9,-p.s*.6,p.s*.7,p.s*.7,0,p.s);cx.bezierCurveTo(-p.s*.7,p.s*.7,-p.s*.9,-p.s*.6,0,-p.s);cx.fill()}
+function heart(p){const s=p.s*.8;cx.beginPath();cx.moveTo(0,s*.35);cx.bezierCurveTo(-s,-s*.35,-s*.5,-s,0,-s*.4);cx.bezierCurveTo(s*.5,-s,s,-s*.35,0,s*.35);cx.fill()}
+let rings=[];
+function wave(x,y,k){k=k||1;for(let n=0;n<3;n++)rings.push({x,y,r:4,d:n*-9,max:(140+n*45)*k,a:.55})}
+function burst(x,y){for(let n=0;n<26;n++){const p=mk(false);p.x=x;p.y=y;p.heart=Math.random()<.6;p.bx=(Math.random()-.5)*9;p.by=-Math.random()*9-3;ps.push(p)}}
+let night=0,nightTarget=0;
+function nightOn(){document.body.classList.add('night');nightTarget=1}
+const stars=Array.from({length:110},()=>({x:Math.random(),y:Math.random()*.85,r:.5+Math.random()*1.3,ph:Math.random()*6}));
+let sparks=[],rockets=[];
+const fcols=['#ff5c93','#ffd166','#ffffff','#ff9ec0','#c77dff','#ffb3d1'];
+function explode(x,y){const c=fcols[Math.random()*fcols.length|0],c2=fcols[Math.random()*fcols.length|0];for(let n=0;n<70;n++){const a=Math.random()*6.283,s=1+Math.random()*4.2;sparks.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,l:1,c:n%3?c:c2})}}
+function fireworks(n){for(let k=0;k<n;k++)setTimeout(()=>{rockets.push({x:W*(.15+Math.random()*.7),y:H,ty:H*(.15+Math.random()*.35)})},k*600)}
+let lastMove=0;
+addEventListener('pointermove',e=>{const t=performance.now();if(t-lastMove>110){lastMove=t;rings.push({x:e.clientX,y:e.clientY,r:3,d:0,max:60,a:.28})}});
+addEventListener('pointerdown',e=>wave(e.clientX,e.clientY,1));
+function frame(t){
+  cx.clearRect(0,0,W,H);
+  night+=(nightTarget-night)*.025;
+  if(night>.02){cx.fillStyle='#fff';for(const s of stars){cx.globalAlpha=night*(.35+.5*Math.sin(t/700+s.ph)**2);cx.beginPath();cx.arc(s.x*W,s.y*H,s.r,0,6.283);cx.fill()}cx.globalAlpha=1}
+  for(const p of ps){
+    if(p.bx!==undefined){p.x+=p.bx;p.y+=p.by;p.bx*=.95;p.by=p.by*.95+.15;if(Math.abs(p.bx)<.3){delete p.bx;delete p.by}}
+    else{p.y+=p.v;p.x+=Math.sin(t/900+p.ph)*.6}
+    p.r+=p.vr;
+    cx.save();cx.translate(p.x,p.y);cx.rotate(p.r);cx.fillStyle=p.c;cx.globalAlpha=p.a*(1-night);
+    p.heart?heart(p):petal(p);cx.restore();
+  }
+  for(let k=ps.length-1;k>=0;k--){if(ps[k].y>H+30){if(k<(reduce?14:40)||ps.length<=(reduce?14:40))ps[k]=mk(true);else ps.splice(k,1)}}
+  for(let k=rockets.length-1;k>=0;k--){
+    const q=rockets[k];q.y-=10;cx.globalAlpha=.9;cx.fillStyle='#fff';cx.fillRect(q.x-1.5,q.y,3,14);cx.globalAlpha=1;
+    if(q.y<=q.ty){explode(q.x,q.y);rockets.splice(k,1)}
+  }
+  for(let k=sparks.length-1;k>=0;k--){
+    const s=sparks[k];s.x+=s.vx;s.y+=s.vy;s.vx*=.98;s.vy=s.vy*.98+.05;s.l-=.014;
+    if(s.l<=0){sparks.splice(k,1);continue}
+    cx.globalAlpha=s.l;cx.fillStyle=s.c;cx.beginPath();cx.arc(s.x,s.y,2.2,0,6.283);cx.fill();
+  }
+  cx.globalAlpha=1;
+  for(let k=rings.length-1;k>=0;k--){
+    const g=rings[k];g.d++;if(g.d<0)continue;
+    g.r+=(g.max-g.r)*.045+.8;const f=g.r/g.max;
+    if(f>=1){rings.splice(k,1);continue}
+    cx.beginPath();cx.arc(g.x,g.y,g.r,0,6.283);
+    cx.strokeStyle='rgba('+(night>.5?'210,205,255':getComputedStyle(document.documentElement).getPropertyValue('--ring'))+','+(g.a*(1-f))+')';
+    cx.lineWidth=2.5*(1-f)+.6;cx.stroke();
+  }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+render();
+</script>
+</body>
+</html>
+```
